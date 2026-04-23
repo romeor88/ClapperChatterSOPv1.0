@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>REP Chatter SOP Engine v1.0</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f11;--s:#17171c;--c:#1e1e26;--b:#2c2c3a;
+  --t:#e4e4f0;--m:#72728a;--h:#4a4a62;
+  --ac:#ff4d6d;--gn:#1dd1a1;--am:#ff9f43;--bl:#48dbfb;--rd:#ff6b81;
+}
+html,body{height:100%;background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh;padding:0 14px}
+
+/* HEADER */
+#hdr{flex-shrink:0;padding:10px 0 8px;border-bottom:1px solid var(--b);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+#hdr h1{font-size:15px;font-weight:700;letter-spacing:-.3px}
+#hdr h1 span{color:var(--ac)}
+#hdr .v{font-size:10px;color:var(--m);font-family:monospace}
+
+/* TABS */
+#tabs{flex-shrink:0;display:flex;gap:4px;padding:8px 0 6px;overflow-x:auto;scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+.tb{font-size:10px;font-family:monospace;padding:5px 10px;border:1px solid var(--b);background:transparent;color:var(--m);border-radius:5px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.tb.on{background:var(--ac);border-color:var(--ac);color:#fff}
+
+/* PANELS */
+#panels{flex:1;overflow:hidden;position:relative}
+.pn{display:none;height:100%;flex-direction:column;gap:7px;padding:8px 0 10px}
+.pn.on{display:flex}
+
+/* ROW GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+
+/* CARD */
+.card{background:var(--c);border:1px solid var(--b);border-radius:8px;padding:8px 10px}
+.ch{font-size:9px;font-family:monospace;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--m);margin-bottom:6px}
+
+/* ROWS */
+.rw{display:flex;gap:7px;align-items:flex-start;padding:4px 0;border-bottom:1px solid var(--b);font-size:11px;line-height:1.4}
+.rw:last-child{border:none;padding-bottom:0}
+.ic{font-size:9px;min-width:20px;height:20px;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(255,255,255,.05);color:var(--m);font-family:monospace}
+
+/* PILLS */
+.pill{font-size:9px;padding:2px 6px;border-radius:9px;white-space:nowrap;flex-shrink:0;font-family:monospace}
+.pg{background:rgba(29,209,161,.15);color:var(--gn)}
+.pa{background:rgba(255,159,67,.15);color:var(--am)}
+.pr{background:rgba(255,107,129,.15);color:var(--rd)}
+.pb{background:rgba(72,219,251,.15);color:var(--bl)}
+
+/* ALERTS */
+.al{padding:6px 9px;font-size:11px;line-height:1.5;display:flex;gap:7px;border-left:2px solid}
+.al.w{background:rgba(255,159,67,.08);border-color:var(--am);color:var(--am)}
+.al.d{background:rgba(255,77,109,.08);border-color:var(--ac);color:var(--rd)}
+.al.i{background:rgba(72,219,251,.08);border-color:var(--bl);color:var(--bl)}
+.al.s{background:rgba(29,209,161,.08);border-color:var(--gn);color:var(--gn)}
+
+/* BUBBLES */
+.bw{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.br{display:flex;gap:5px;align-items:flex-end}
+.br.r{flex-direction:row-reverse}
+.bu{max-width:78%;padding:5px 8px;border-radius:10px;font-size:11px;line-height:1.4}
+.bu.me{background:var(--ac);color:#fff;border-bottom-right-radius:2px}
+.bu.th{background:var(--s);border:1px solid var(--b);border-bottom-left-radius:2px}
+.cp{font-size:9px;padding:2px 5px;border-radius:3px;border:1px solid var(--b);background:transparent;color:var(--m);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:monospace;align-self:flex-end;margin-bottom:1px}
+.cp:hover{border-color:var(--ac);color:var(--ac)}
+.cp.ok{border-color:var(--gn);color:var(--gn)}
+
+/* CHAT MSG */
+.cm{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.cm:last-child{margin-bottom:0}
+.cmb{background:var(--s);border:1px solid var(--b);border-radius:6px;padding:5px 8px;font-size:11px;flex:1}
+
+/* GLOSSARY */
+.gl{display:grid;grid-template-columns:82px 1fr;gap:8px;padding:4px 0;border-bottom:1px solid var(--b);font-size:11px;align-items:start}
+.gl:last-child{border:none}
+.gt{font-size:10px;font-weight:700;color:var(--bl);font-family:monospace}
+
+/* CHECKLIST */
+.ck{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--b);font-size:11px;cursor:pointer;user-select:none}
+.ck:last-child{border:none}
+.ck.done{color:var(--h);text-decoration:line-through}
+.cb{width:14px;height:14px;border-radius:3px;border:1px solid var(--b);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.ck.done .cb{background:var(--gn);border-color:var(--gn);color:#0f0f11}
+
+/* RANK CHIPS */
+.rkr{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.rk{border:1px solid var(--b);border-radius:6px;padding:4px 8px;font-size:10px;text-align:center;font-family:monospace}
+.rk b{display:block;font-size:13px;font-weight:700}
+.rk.hi{border-color:rgba(255,107,129,.5);color:var(--rd)}
+.rk.med{border-color:rgba(255,159,67,.5);color:var(--am)}
+
+/* CHIPS */
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font-size:10px;padding:3px 8px;border-radius:10px;background:var(--s);border:1px solid var(--b);color:var(--m)}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="hdr">
+  <h1>REP Chatter <span>SOP Engine</span> v1.0</h1>
+  <span class="v">Clapper VA Guide — Confidential</span>
+</div>
+
+<div id="tabs">
+  <button class="tb on" onclick="sw('ov',this)">01 Overview</button>
+  <button class="tb"    onclick="sw('su',this)">02 Setup</button>
+  <button class="tb"    onclick="sw('ol',this)">03 On Live</button>
+  <button class="tb"    onclick="sw('sc',this)">04 Scripts</button>
+  <button class="tb"    onclick="sw('ob',this)">05 Objections</button>
+  <button class="tb"    onclick="sw('gl',this)">06 Glossary</button>
+  <button class="tb"    onclick="sw('ck',this)">07 Checklist</button>
+</div>
+
+<div id="panels">
+
+<!-- 01 OVERVIEW -->
+<div id="ov" class="pn on">
+  <div class="al i">You type AS the model — in her voice. You never appear on camera.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch">Products</div>
+      <div class="rw"><span class="ic">$$$</span><span><b>1-on-1 call</b> — private video session. Top value.</span></div>
+      <div class="rw"><span class="ic">$$</span><span><b>Content videos</b> — clips sold via tip.</span></div>
+      <div class="rw"><span class="ic">$</span><span><b>Dice teaser</b> — free video. Use to hook into a sale.</span></div>
+    </div>
+    <div class="card">
+      <div class="ch">Payment order</div>
+      <div class="rw"><span class="pill pg">1st</span>Tips — full value. Always push this.</div>
+      <div class="rw"><span class="pill pa">2nd</span>PayPal / CashApp / Zelle</div>
+      <div class="rw"><span class="pill pr">Last</span>Gifts — 30–40% only. Videos only.</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch">You DO</div>
+      <div class="rw"><span class="ic">✓</span>DM viewers as the model</div>
+      <div class="rw"><span class="ic">✓</span>Post in live chat, keep energy up</div>
+      <div class="rw"><span class="ic">✓</span>Collect usernames, convert to tips</div>
+      <div class="rw"><span class="ic">✓</span>Moderate — remove bad actors</div>
+    </div>
+    <div class="card">
+      <div class="ch">You do NOT</div>
+      <div class="rw"><span class="ic">✗</span>Go on camera ever</div>
+      <div class="rw"><span class="ic">✗</span>Promise things model can't do</div>
+      <div class="rw"><span class="ic">✗</span>Accept gifts for 1-1s</div>
+      <div class="rw"><span class="ic">✗</span>Engage trolls or negatives</div>
+    </div>
+  </div>
+</div>
+
+<!-- 02 SETUP -->
+<div id="su" class="pn">
+  <div class="al d">NEVER turn on location for Clapper — damages model visibility.</div>
+  <div class="al w">Keep Shadowrocket ON whenever Clapper is open.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch">2 devices needed</div>
+      <div class="rw"><span class="pill pb">A</span><span><b>Model's account</b> — DMs + live chat</span></div>
+      <div class="rw"><span class="pill pa">B</span><span><b>Your viewer account</b> — watch live, collect links. Needs mod permission from model.</span></div>
+    </div>
+    <div class="card">
+      <div class="ch">Required apps</div>
+      <div class="rw"><span class="ic">→</span><b>Shadowrocket</b> — always ON</div>
+      <div class="rw"><span class="ic">→</span><b>Telegram</b> — share links, log tips</div>
+      <div class="rw"><span class="ic">→</span><b>Vysor</b> (Android) — phone to PC keyboard</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch">Telegram workflow</div>
+    <div class="chips">
+      <span class="chip">1. Group: both accounts + model</span>
+      <span class="chip">2. Device B: copy viewer link → paste to group</span>
+      <span class="chip">3. Device A: find user → follow → DM</span>
+      <span class="chip">4. Log every tip conversion in group</span>
+    </div>
+  </div>
+</div>
+
+<!-- 03 ON LIVE -->
+<div id="ol" class="pn">
+  <div class="al s">Live = sell. Offline = build relationship.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch">Phase 1 — Open (5 min)</div>
+      <div class="rw"><span class="ic">1</span>Post "@everyone im live now" in fan group</div>
+      <div class="rw"><span class="ic">2</span>Device B: type + PIN "🎲 dice for free vid / dm for 1-1"</div>
+      <div class="rw"><span class="ic">3</span>Wait for viewers before collecting links</div>
+    </div>
+    <div class="card">
+      <div class="ch">Phase 2 — Collect & DM</div>
+      <div class="rw"><span class="ic">1</span>Tap viewer count → browse viewers</div>
+      <div class="rw"><span class="ic">2</span>Profile → 3 dots → Copy Link → Telegram</div>
+      <div class="rw"><span class="ic">3</span>Device A → find → follow → DM now</div>
+      <div class="rw"><span class="ic">!</span>Don't mass-DM — take breaks</div>
+    </div>
+  </div>
+  <div class="al w">Viewer count frozen 10+ sec? Leave stream and rejoin immediately.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch">Phase 3 — Priority</div>
+      <div class="rw"><span class="pill pr">High</span>Lv 30+ — DM first</div>
+      <div class="rw"><span class="pill pr">High</span>Donors/gifters — follow up now</div>
+      <div class="rw"><span class="pill pa">Med</span>Active chatters — typing = interest</div>
+      <div class="rw"><span class="pill pb">Low</span>Low-level — qualify fast, move on</div>
+    </div>
+    <div class="card">
+      <div class="ch">Viewer levels</div>
+      <div class="rkr">
+        <div class="rk"><b>1–9</b>New</div>
+        <div class="rk"><b>10–19</b>Reg</div>
+        <div class="rk"><b>20–29</b>Active</div>
+        <div class="rk med"><b>30–39</b>Spender</div>
+        <div class="rk hi"><b>40+</b>VIP</div>
+      </div>
+      <div style="font-size:10px;color:var(--m);margin-top:6px">Levels = gifts only, not tips. Low-level can still tip big.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 04 SCRIPTS -->
+<div id="sc" class="pn">
+  <div class="g2">
+    <div class="card" style="overflow:hidden">
+      <div class="ch">Standard DM — cold viewer</div>
+      <div class="bw">
+        <div class="br r"><div class="bu me">Hey baby how are you? 😊</div><button class="cp" onclick="cp(this,'Hey baby how are you? 😊')">copy</button></div>
+        <div class="br"><div class="bu th">good u?</div></div>
+        <div class="br r"><div class="bu me">Im good just bored and naughty on live 😈</div><button class="cp" onclick="cp(this,'Im good just bored and naughty on live 😈')">copy</button></div>
+        <div class="br r"><div class="bu me">You enjoying watching me papi? 👀</div><button class="cp" onclick="cp(this,'You enjoying watching me papi? 👀')">copy</button></div>
+        <div class="br"><div class="bu th">yeah you're hot</div></div>
+        <div class="br r"><div class="bu me">Aww ty 🥰 I sell 1-1s + spicy content if you want something private...</div><button class="cp" onclick="cp(this,'Aww ty 🥰 I sell 1-1s + spicy content if you want something private...')">copy</button></div>
+        <div class="br r"><div class="bu me">It's [PRICE] for 1-1 or [PRICE] for vids 🔥 Interested?</div><button class="cp" onclick="cp(this,`It's [PRICE] for 1-1 or [PRICE] for vids 🔥 Interested?`)">copy</button></div>
+        <div class="br"><div class="bu th">yeah how do I pay?</div></div>
+        <div class="br r"><div class="bu me">Send me a tip babe 💕 Click + in chat → Tip</div><button class="cp" onclick="cp(this,'Send me a tip babe 💕 Click + in chat → Tip')">copy</button></div>
+        <div class="br"><div class="bu th">[sends tip]</div></div>
+        <div class="br r"><div class="bu me">Perfect papi 🙌 Wrapping live in 15-20 min then sending your private link!</div><button class="cp" onclick="cp(this,`Perfect papi 🙌 Wrapping live in 15-20 min then sending your private link!`)">copy</button></div>
+        <div class="br r"><div class="bu me">Here's something while you wait 🎁 [TEASER]</div><button class="cp" onclick="cp(this,`Here's something while you wait 🎁`)">copy</button></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div class="card">
+        <div class="ch">Dice roll</div>
+        <div class="bw">
+          <div class="br"><div class="bu th">I rolled! 🎲</div></div>
+          <div class="br r"><div class="bu me">Here you go baby 😉 [TEASER]</div><button class="cp" onclick="cp(this,'Here you go baby 😉')">copy</button></div>
+          <div class="br r"><div class="bu me">Did you like it? 🥵</div><button class="cp" onclick="cp(this,'Did you like it? 🥵')">copy</button></div>
+          <div class="br"><div class="bu th">yeah want more</div></div>
+          <div class="br r"><div class="bu me">Lots more babe 😈 I do 1-1s + content — want details?</div><button class="cp" onclick="cp(this,'Lots more babe 😈 I do 1-1s + content — want details?')">copy</button></div>
+        </div>
+        <div style="font-size:10px;color:var(--m);margin-top:5px">→ continue from standard flow above</div>
+      </div>
+      <div class="card">
+        <div class="ch">Live chat — post every 10–15 min</div>
+        <div class="cm"><div class="cmb">🎲 dice for free vid — dm for 1-1</div><button class="cp" onclick="cp(this,'🎲 dice for free vid — dm for 1-1')">copy</button></div>
+        <div class="cm"><div class="cmb">slide in my dms 👀 special stuff available</div><button class="cp" onclick="cp(this,'slide in my dms 👀 special stuff available')">copy</button></div>
+        <div class="cm"><div class="cmb">1-1 spots open tonight 🔥 dm me</div><button class="cp" onclick="cp(this,'1-1 spots open tonight 🔥 dm me')">copy</button></div>
+        <div class="cm"><div class="cmb">@everyone im live now 🔥</div><button class="cp" onclick="cp(this,'@everyone im live now 🔥')">copy</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 05 OBJECTIONS -->
+<div id="ob" class="pn">
+  <div class="g2">
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div class="card">
+        <div class="ch">"Can't tip / can't pay"</div>
+        <div class="bw">
+          <div class="br r"><div class="bu me">Do you have PayPal, CashApp or Zelle babe? I'll send details 💕</div><button class="cp" onclick="cp(this,'Do you have PayPal, CashApp or Zelle babe? I\'ll send details 💕')">copy</button></div>
+        </div>
+        <div class="al i" style="margin-top:6px;font-size:10px">No alt? Gifts for videos only — never 1-1s. Last resort (30–40%).</div>
+      </div>
+      <div class="card">
+        <div class="ch">"Too expensive"</div>
+        <div class="bw">
+          <div class="br r"><div class="bu me">How much do you have babe? Let's work something out 🥰</div><button class="cp" onclick="cp(this,'How much do you have babe? Let\'s work something out 🥰')">copy</button></div>
+          <div class="br"><div class="bu th">[low number]</div></div>
+          <div class="br r"><div class="bu me">Ok we can do 15 mins for that 😉 You know you want it</div><button class="cp" onclick="cp(this,'Ok we can do 15 mins for that 😉 You know you want it')">copy</button></div>
+        </div>
+        <div class="al w" style="margin-top:6px;font-size:10px">Still no? Offer videos. Nothing? Move on.</div>
+      </div>
+      <div class="card">
+        <div class="ch">"I'll send later" / silent</div>
+        <div class="bw">
+          <div class="br r"><div class="bu me">Hey babe still here? 😊</div><button class="cp" onclick="cp(this,'Hey babe still here? 😊')">copy</button></div>
+        </div>
+        <div style="font-size:10px;color:var(--m);margin-top:5px">Once only, after 5–10 min silence. No reply → move on. Don't spam.</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div class="card">
+        <div class="ch">"When's the 1-1?" / wants it now</div>
+        <div class="bw">
+          <div class="br r"><div class="bu me">Send the tip and I'm all yours 🔥 We schedule after the live!</div><button class="cp" onclick="cp(this,`Send the tip and I'm all yours 🔥 We schedule after the live!`)">copy</button></div>
+        </div>
+        <div class="al i" style="margin-top:6px;font-size:10px">Paid but live running long? Send teaser + apologise. They can tip $20–30 to end live early.</div>
+      </div>
+      <div class="card">
+        <div class="ch">Aggressive / refund demand</div>
+        <div class="bw">
+          <div class="br r"><div class="bu me">So sorry for the wait, ending live right now 🙏</div><button class="cp" onclick="cp(this,`So sorry for the wait, ending live right now 🙏`)">copy</button></div>
+        </div>
+        <div style="font-size:10px;color:var(--m);margin-top:5px">Alert model on Telegram immediately.</div>
+      </div>
+      <div class="card">
+        <div class="ch">Phase 4 — Moderation</div>
+        <div class="rw"><span class="ic">→</span>Post live chat DM reminder every 10–15 min</div>
+        <div class="rw"><span class="ic">→</span>Remove negatives: Viewers → Manage → Remove</div>
+        <div class="rw"><span class="ic">→</span>Keep public chat positive and flirty</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 06 GLOSSARY -->
+<div id="gl" class="pn">
+  <div class="card">
+    <div class="gl"><div class="gt">1-1 / DND</div><div>Private video call. In DM = booking session. In live chat = private show on stream. Handle differently.</div></div>
+    <div class="gl"><div class="gt">Dice / Roll</div><div>Viewer sent dice gift. Gets a teaser video. Entry point to sell more or upgrade to 1-1.</div></div>
+    <div class="gl"><div class="gt">CA / Zelle / PP</div><div>CashApp / Zelle / PayPal — alt payment when tips fail. Links from manager.</div></div>
+    <div class="gl"><div class="gt">Gift</div><div>In-app payment. 30–40% payout only. Videos only. Never for 1-1s. Last resort.</div></div>
+    <div class="gl"><div class="gt">Tip</div><div>Direct in-app payment. Full value. Always push tips first.</div></div>
+    <div class="gl"><div class="gt">OF</div><div>OnlyFans. If asked, redirect to buy content on Clapper instead.</div></div>
+    <div class="gl"><div class="gt">Level / Rank</div><div>Clapper level = total gifts spent. Higher = bigger spender. Prioritize Lv 30+.</div></div>
+    <div class="gl"><div class="gt">Pin</div><div>Keeps message at top of live chat. Always pin dice/DM offer at stream start.</div></div>
+    <div class="gl"><div class="gt">Shadowrocket</div><div>Required app. Must stay ON when Clapper is open. Reduces account risk.</div></div>
+    <div class="gl"><div class="gt">Vysor</div><div>Android only. Mirrors phone to PC — keyboard typing, much faster for chatting.</div></div>
+  </div>
+</div>
+
+<!-- 07 CHECKLIST -->
+<div id="ck" class="pn">
+  <div class="g2">
+    <div class="card">
+      <div class="ch">Before the live</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Shadowrocket ON</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Location OFF on both devices</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Both accounts logged in</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Telegram group ready</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Mod permission on Device B</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Vysor connected (Android)</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Pricing confirmed w/ manager</div>
+    </div>
+    <div class="card">
+      <div class="ch">At stream start</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>@everyone posted in fan group</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Joined live on Device B</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Dice/DM message pinned</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Collecting viewer usernames</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Opening DMs being sent</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch">During the live</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>DM reminder every 10–15 min</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Following up donors / dice rollers</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Logging tip conversions</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Monitoring for trolls</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Rejoin if viewer count freezes</div>
+    </div>
+    <div class="card">
+      <div class="ch">After the live</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>All 1-1s flagged to model</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Follow-up sent to cold leads</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Total tips logged</div>
+      <div class="ck" onclick="tc(this)"><span class="cb"></span>Issues reported to manager</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /panels -->
+</div><!-- /app -->
+
+<script>
+function sw(id,btn){
+  document.querySelectorAll('.pn').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  btn.classList.add('on');
+  btn.scrollIntoView({inline:'nearest',behavior:'smooth'});
+}
+function tc(el){
+  el.classList.toggle('done');
+  el.querySelector('.cb').textContent=el.classList.contains('done')?'✓':'';
+}
+function cp(btn,text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const o=btn.textContent;
+    btn.textContent='✓';btn.classList.add('ok');
+    setTimeout(()=>{btn.textContent=o;btn.classList.remove('ok')},1300);
+  });
+}
+</script>
+</body>
+</html>
